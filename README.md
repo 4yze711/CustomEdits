@@ -1,2 +1,2 @@
 # CustomEdits
-LuaEdit builds for EdoPro design
+LuaEdit builds for custom EdoPro designs
