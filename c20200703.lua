@@ -70,14 +70,14 @@ function s.initial_effect(c)
 	e6:SetTarget(s.tgtg)
 	e6:SetOperation(s.tgop)
 	c:RegisterEffect(e6)
---Cannot be destroyed by battle
+-- Cannot be targeted for attacks
 	local e7=Effect.CreateEffect(c)
 	e7:SetType(EFFECT_TYPE_SINGLE)
 	e7:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
-	e7:SetCode(EFFECT_INDESTRUCTABLE_BATTLE)
+	e7:SetCode(EFFECT_IGNORE_BATTLE_TARGET)
 	e7:SetRange(LOCATION_MZONE)
-	e7:SetCondition(function(e) return Duel.IsExistingMatchingCard(Card.IsCode,e:GetHandlerPlayer(),LOCATION_GRAVE,0,1,nil,CARD_DARK_MAGICIAN) end)
 	e7:SetValue(1)
+	e7:SetCondition(function(e) return Duel.IsExistingMatchingCard(Card.IsCode,e:GetHandlerPlayer(),LOCATION_GRAVE,0,1,nil,CARD_DARK_MAGICIAN) end)
 	c:RegisterEffect(e7)
 end	
 s.listed_names={CARD_DARK_MAGICIAN}
