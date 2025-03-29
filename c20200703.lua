@@ -159,8 +159,8 @@ function s.tgcost(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,3,nil) and 
 	Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_DECK,0,1,nil)end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local g=Duel.SelectMatchingCard(tp,s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,3,3,nil)
-	Duel.SendtoGrave(g,POS_FACEUP,REASON_COST)
+	local tc=Duel.SelectMatchingCard(tp,s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,3,3,nil)
+	Duel.SendtoGrave(tc,POS_FACEUP,REASON_COST)
 end
 function s.tgtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(s.dmfilter,tp,(LOCATION_GRAVE|LOCATION_REMOVED),0,1,nil,e,tp) end
