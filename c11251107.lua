@@ -40,7 +40,7 @@ function s.initial_effect(c)
 	c:RegisterEffect(e3)
 --Add DARK attribute
 	local e4=Effect.CreateEffect(c)
-	e4:SetDescription(aux.Stringid(id,1))
+	e4:SetDescription(aux.Stringid(id,2))
 	e4:SetType(EFFECT_TYPE_SINGLE)
 	e4:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
 	e4:SetCode(EFFECT_ADD_ATTRIBUTE)
@@ -83,7 +83,7 @@ function s.thfilter(c)
 end
 function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(s.thfilter,tp,(LOCATION_DECK|LOCATION_REMOVED),0,1,nil) end
-		Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,(LOCATION_DECK|LOCATION_REMOVED)) 
+		Duel.SetPossibleOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,(LOCATION_DECK|LOCATION_REMOVED)) 
 end
 function s.thop(e,tp,eg,ep,ev,re,r,rp,c)
 	local tc=Duel.SelectMatchingCard(tp,s.tgfilter,tp,(LOCATION_HAND|LOCATION_DECK),0,1,1,nil):GetFirst()

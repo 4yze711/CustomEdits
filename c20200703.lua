@@ -50,7 +50,7 @@ function s.initial_effect(c)
 	e5:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
 	e5:SetCode(EVENT_PREDRAW)
 	e5:SetRange(LOCATION_MZONE)
-	e4:SetCountLimit(1,id)
+	e4:SetCountLimit(1,{id,1})
 	e5:SetCost(s.pdcost)
 	e5:SetCondition(s.pdcon)
 	e5:SetTarget(s.pdtg)
@@ -63,7 +63,7 @@ function s.initial_effect(c)
 	e6:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_QUICK_O)
 	e6:SetCode(EVENT_FREE_CHAIN)
 	e6:SetRange(LOCATION_MZONE)
-	e6:SetCountLimit(1,id)
+	e6:SetCountLimit(1,{id,1})
 	e6:SetHintTiming(0,TIMINGS_CHECK_MONSTER)
 	e6:SetCondition(function() return Duel.IsMainPhase() end)
 	e6:SetCost(s.tgcost)
@@ -156,12 +156,17 @@ function s.filter(c)
 	return c:IsSetCard(0x46) and c:IsSpell() and c:IsAbleToHand()
 end
 function s.tgcost(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,3,nil) and 
-	Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_DECK,0,1,nil)end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local tc=Duel.SelectMatchingCard(tp,s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,3,3,nil)
-	Duel.SendtoGrave(tc,POS_FACEUP,REASON_COST)
-end
+	local g=Duel.GetMatchingGroup(s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,3,3,nil)
+	if chk==0 then return g:GetClassCount(Card.GetCode)>2 end
+	local tg=Group.CreateGroup()
+	for i=1,3 do
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+		local sg=g:Select(tp,1,1,nil)
+		g:Remove(Card.IsCode,nil,sg:GetFirst():GetCode())
+		tg:Merge(sg)
+	end
+		Duel.SendtoGrave(tg,POS_FACEUP,REASON_COST)
+ end
 function s.tgtg(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then return Duel.IsExistingMatchingCard(s.dmfilter,tp,(LOCATION_GRAVE|LOCATION_REMOVED),0,1,nil,e,tp) end
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,(LOCATION_GRAVE|LOCATION_REMOVED))

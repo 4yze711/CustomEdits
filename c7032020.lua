@@ -33,17 +33,25 @@ function s.initial_effect(c)
 	e3:SetTarget(s.settg)
 	e3:SetOperation(s.setop)
 	c:RegisterEffect(e3)
--- Send 1 Ritual card to GY, add 1 "of Rites" card 
+--Register if it's Special Summoned with "Chaos Form"
 	local e4=Effect.CreateEffect(c)
-	e4:SetDescription(aux.Stringid(id,2))
-	e4:SetCategory(CATEGORY_SPECIAL_SUMMON)
-	e4:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e4:SetProperty(EFFECT_FLAG_DELAY)
+	e4:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_CONTINUOUS)
+	e4:SetProperty(EFFECT_FLAG_CANNOT_DISABLE)
 	e4:SetCode(EVENT_SPSUMMON_SUCCESS)
-	e4:SetCountLimit(1,{id,2})
-	e4:SetTarget(s.tgtg)
-	e4:SetOperation(s.tgop)
+	e4:SetOperation(s.regop)
 	c:RegisterEffect(e4)
+--Ritual Summon 1 Level 7 Ritual Spellcaster Monster from hand/Deck
+	local e5=Effect.CreateEffect(c)
+	e5:SetDescription(aux.Stringid(id,2))
+	e5:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	e5:SetType(EFFECT_TYPE_IGNITION)
+	e5:SetRange(LOCATION_MZONE)
+	e5:SetProperty(EFFECT_FLAG_DELAY)
+	e5:SetCountLimit(1,{id,2})
+	e5:SetCondition(function(e) return e:GetHandler():HasFlagEffect(id) end)
+	e5:SetTarget(s.sptg)
+	e5:SetOperation(s.spop)
+	c:RegisterEffect(e5)
 end
 s.listed_names={21082832,46986414}
 -- Discard to search Spellcaster
@@ -90,31 +98,36 @@ function s.setop(e,tp,eg,ep,ev,re,r,rp)
 		tc:RegisterEffect(e1)
 	end
 end
---If this card is Special Summoned
-function s.immcon(e)
-	return e:GetHandler():IsSummonType(SUMMON_TYPE_SPECIAL)
-end
-function s.tgfilter(c)
-	return (c:IsRitualSpell() or c:IsRitualMonster()) and c:IsAbleToGrave()
-end
-function s.tgtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(s.tgfilter,tp,(LOCATION_DECK|LOCATION_HAND),0,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_TOGRAVE,nil,1,tp,(LOCATION_DECK|LOCATION_HAND))
-	Duel.SetPossibleOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,(LOCATION_DECK|LOCATION_GRAVE))
-end
-function s.trfilter(c)
-	return (c:IsCode(96729612) or c:IsCode(13048472)) and c:IsAbleToHand()
-end
-function s.tgop(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
-	local g=Duel.SelectMatchingCard(tp,s.tgfilter,tp,LOCATION_DECK,0,1,1,nil)
-	if #g>0 and Duel.SendtoGrave(g,REASON_EFFECT)>0 and g:GetFirst():IsLocation(LOCATION_GRAVE)
-		and Duel.IsExistingMatchingCard(aux.NecroValleyFilter(s.trfilter),tp,(LOCATION_DECK|LOCATION_GRAVE),0,1,nil)
-		and Duel.SelectYesNo(tp,aux.Stringid(id,2)) then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-		local sg=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(s.trfilter),tp,(LOCATION_DECK|LOCATION_GRAVE),0,1,1,nil)
-		Duel.BreakEffect()
-		Duel.SendtoHand(sg,nil,REASON_EFFECT)
-		Duel.ConfirmCards(1-tp,sg)
+--Register if Summoned with Chaos Form
+function s.regop(e,tp,eg,ep,ev,re,r,rp)
+	if re:GetHandler():IsCode(21082832) then
+		e:GetHandler():RegisterFlagEffect(id,RESET_EVENT|RESETS_STANDARD&~RESET_TEMP_REMOVE,EFFECT_FLAG_CLIENT_HINT,1,0,aux.Stringid(id,1))
 	end
+end
+--Ritual Summon 1 Level 7 Spellcaster Ritual Monster
+function s.cfilter(c)
+	return c:IsFaceup() and (c:IsCode(CARD_DARK_MAGICIAN) or c:IsCode(CARD_DARK_MAGICIAN_GIRL))
+end
+function s.spfilter(c,e,tp)
+	local pg=aux.GetMustBeMaterialGroup(tp,Group.CreateGroup(),tp,c,nil,REASON_RITUAL)
+	return #pg<=0 and c:IsRace(RACE_SPELLCASTER) and c:IsLevel(7) and c:IsRitualMonster() and not c:IsCode(id)
+		and c:IsCanBeSpecialSummoned(e,SUMMON_TYPE_RITUAL,tp,true,false,POS_FACEUP)
+end
+function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		and Duel.IsExistingMatchingCard(s.spfilter,tp,(LOCATION_HAND|LOCATION_DECK),0,1,nil,e,tp) end
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,(LOCATION_HAND|LOCATION_DECK))
+end
+function s.spop(e,tp,eg,ep,ev,re,r,rp)
+	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local tc=Duel.SelectMatchingCard(tp,s.spfilter,tp,(LOCATION_HAND|LOCATION_DECK),0,1,1,nil,e,tp):GetFirst()
+	if tc and Duel.SpecialSummon(tc,SUMMON_TYPE_RITUAL,tp,tp,true,false,POS_FACEUP)>0 then
+		tc:CompleteProcedure()
+	local g=Duel.SelectTarget(tp,s.cfilter,tp,LOCATION_REMOVED,0,1,99,nil)
+	if #g>0 then
+		Duel.SetOperationInfo(0,CATEGORY_TODECK,g,#g,0,0)
+		Duel.SendtoGrave(g,REASON_EFFECT+REASON_RETURN)
+	end
+ end
 end
